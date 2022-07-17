@@ -1,4 +1,5 @@
 ﻿namespace SuggestionAppLibrary.Models;
+[BsonIgnoreExtraElements]
 public class StatusModel
 {
    [BsonId]
