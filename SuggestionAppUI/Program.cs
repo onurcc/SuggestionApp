@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Rewrite;
+using Microsoft.IdentityModel.Logging;
 using SuggestionAppUI;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.ConfigureServices();
 
 var app = builder.Build();
+
+IdentityModelEventSource.ShowPII = true;
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -22,6 +26,21 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseRewriter(
+   new RewriteOptions().Add(
+      context =>
+      {
+         if (context.HttpContext.Request.Path == "/MicrosoftIdentity/Account/SignedOut")
+         {
+            context.HttpContext.Response.Redirect("/");
+         }
+      }
+      ));
+
+app.MapControllers();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 

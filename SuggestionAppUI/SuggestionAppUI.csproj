@@ -7,7 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\images\" />
+    <Compile Remove="wwwroot\images\deleteThis\**" />
+    <Content Remove="wwwroot\images\deleteThis\**" />
+    <EmbeddedResource Remove="wwwroot\images\deleteThis\**" />
+    <None Remove="wwwroot\images\deleteThis\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,6 +20,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SuggestionAppLibrary\SuggestionAppLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
 </Project>

@@ -31,6 +31,20 @@ public class MongoSuggestionData : ISuggestionData
       return output;
    }
 
+    public async Task<List<SuggestionModel>> GetUsersSuggestions(string userId)
+    {
+        var output = _cache.Get<List<SuggestionModel>>(userId);
+        if (output is null)
+        {
+         var results = await _suggestions.FindAsync(s => s.Author.Id == userId);
+         output = results.ToList();
+
+         _cache.Set(userId, output, TimeSpan.FromMinutes(1));
+        }
+
+      return output;
+    }
+
    public async Task<List<SuggestionModel>> GetAllApprovedSuggestions()
    {
       var output = await GetAllSuggestions();
@@ -75,10 +89,10 @@ public class MongoSuggestionData : ISuggestionData
             suggestion.UserVotes.Remove(userId);
          }
 
-         await suggestionsInTransaction.ReplaceOneAsync(s => s.Id == suggestionId, suggestion);
+         await suggestionsInTransaction.ReplaceOneAsync(session, s => s.Id == suggestionId, suggestion);
 
          var usersInTransaction = db.GetCollection<UserModel>(_db.UserCollectionName);
-         var user = await _userData.GetUser(suggestion.Author.Id);
+         var user = await _userData.GetUser(userId);
 
          if (isUpvote)
          {
@@ -89,7 +103,7 @@ public class MongoSuggestionData : ISuggestionData
             var suggestionToRemove = user.VotedOnSuggestions.Where(s => s.Id == suggestionId).First();
             user.VotedOnSuggestions.Remove(suggestionToRemove);
          }
-         await usersInTransaction.ReplaceOneAsync(u => u.Id == userId, user);
+         await usersInTransaction.ReplaceOneAsync(session, u => u.Id == userId, user);
 
          await session.CommitTransactionAsync();
 
@@ -119,7 +133,7 @@ public class MongoSuggestionData : ISuggestionData
          var usersInTransaction = db.GetCollection<UserModel>(_db.UserCollectionName);
          var users = await _userData.GetUser(suggestion.Author.Id);
          users.AuthoredSuggestions.Add(new BasicSuggestionModel(suggestion));
-         await usersInTransaction.ReplaceOneAsync(u => u.Id == users.Id, users);
+         await usersInTransaction.ReplaceOneAsync(session, u => u.Id == users.Id, users);
 
          await session.CommitTransactionAsync();
       }
